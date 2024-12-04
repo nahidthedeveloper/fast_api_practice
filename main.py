@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +25,9 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -50,9 +53,12 @@ async def list_media_files():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Message text was: {data}")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Message text was: {data}")
+    except WebSocketDisconnect:
+        print("WebSocket disconnected")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -68,7 +74,3 @@ async def hello(name: str, age: int):
 @app.get('/hello/{name}')
 async def hello_path(name: str):
     return {"message": f"Hello {name}"}
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
