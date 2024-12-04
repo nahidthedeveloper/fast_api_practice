@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import WebSocket
-import asyncio
+import datetime
 import uvicorn
 import os
 
@@ -26,6 +26,16 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup_event():
+    print('Server started :', datetime.datetime.now())
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    print('server Shutdown :', datetime.datetime.now())
+
+
 @app.get("/media")
 async def list_media_files():
     media_dir = "media"
@@ -35,12 +45,6 @@ async def list_media_files():
     # Get a list of all files in the media directory
     files = [f for f in os.listdir(media_dir) if os.path.isfile(os.path.join(media_dir, f))]
     return {"files": files}
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    print("Server is shutting down...")
-    await asyncio.sleep(1)  # Simulate cleanup delay
 
 
 @app.websocket("/ws")
